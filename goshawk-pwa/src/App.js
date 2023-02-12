@@ -32,11 +32,40 @@ function useIsSignedIn() {
   return [isSignedIn];
 }
 
-const getUserDetails = async (set) => {
+const getUserDetails = async (usd, setUsd, path = 'root') => {
   if (provider) {
     let graphClient = provider.graph.client;
-    let userDetails = await graphClient.api('me').get();
-    set(JSON.stringify(userDetails));
+    let fds = []
+    let userDetails = await graphClient.api('/me/drive/items/' + path + ':/images:/children/').get();
+    userDetails?.value?.map(async (it) => {
+      if (it.name.indexOf('.info')) {
+        let a = await getPicInFolder(it.id);
+        // console.log(a)
+        a.map((i) => {
+          if (i != '') {
+            usd.push(i)
+            setUsd(usd)
+            // console.log(i)
+          }
+        })
+      }
+    })
+  }
+}
+
+const getPicInFolder = async (id) => {
+  if (provider) {
+    let graphClient = provider.graph.client;
+    let picFolder = await graphClient.api('/me/drive/items/' + id + '/children/').get();
+    return picFolder?.value?.map((it) => {
+      // console.log(it.name)
+      let rst = ''
+      if ((it.name.indexOf('thumb') === -1) && (it.name.indexOf('png') > 0 || it.name.indexOf('jpg')>0)) {
+        // console.log('pass'+it.name)
+        rst = it.id
+      }
+      return rst
+    })
   }
 }
 
@@ -46,9 +75,7 @@ function App() {
   const [filename, setFilename] = useState('');  
   const [backpath, setBackpath] = useState([]);  
   const [eagleroot, setEagleroot] = useState('');  
-  const [usd, setUsd] = useState('');  
-
-  getUserDetails(setUsd)
+  const [usd, setUsd] = useState([]);  
 
   return (
     <div className="App">
@@ -59,8 +86,7 @@ function App() {
         q {'/me/drive/items/' + filepath + '/children'}<br />
         bp {JSON.stringify(backpath)}<br /> */}
         {isSignedIn &&
-          <div>
-            {usd}
+          <div class="ctn">
             <div
               style={{cursor: 'pointer'}}
               onClick={() => {
@@ -76,6 +102,7 @@ function App() {
               style={{ cursor: 'pointer' }}
               onClick={() => {
                 setEagleroot(filepath)
+                getUserDetails(usd, setUsd, eagleroot)
               }}>
               Set Eagle Root
             </div>
@@ -96,7 +123,9 @@ function App() {
               ></FileList>
             </div>
             <div class="eagle">
-              {eagleroot ? eagleroot : 'not set'}
+              {eagleroot ? <div>
+                {JSON.stringify(usd)}
+              </div> : 'not set'}
             </div>
           </div>}
       </header>

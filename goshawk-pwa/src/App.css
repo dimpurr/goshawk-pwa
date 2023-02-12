@@ -1,9 +1,15 @@
+.ctn {
+  vertical-align: top;
+}
+
 .onedrive {
+  vertical-align: top;
   width: 20%;
   display: inline-block;
 }
 
 .eagle {
+  vertical-align: top;
   width: 70%;
   margin-left: 5%;
   display: inline-block;
